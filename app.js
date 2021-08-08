@@ -32,7 +32,7 @@ app.use(function (req, res, next) {
   next();
 });
 //cors end
-app.use(express.static(`./client/build`));
+
 app.get("*", (req, res) => {
   res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
 });
@@ -250,6 +250,9 @@ app.get("/data", async (req, res, next) => {
 
 //register rote end
 //error handel
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(`client/build`));
+}
 app.use(async (req, res, next) => {
   next(createError.NotFound());
 });
