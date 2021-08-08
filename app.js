@@ -1,21 +1,13 @@
+//
 const express = require("express");
-const app = express();
 const socket = require("socket.io");
-const http = require("http");
-const webrtc = require("wrtc");
-// const bodyParser = require("body-parser");
 const createError = require("http-errors");
-
-const morgan = require("morgan");
-
-app.use(morgan("dev"));
+const webrtc = require("wrtc");
+const app = express();
 app.use(express.json());
-app.use(express.static(`./client/build`));
-app.get("*", (req, res) => {
-  res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
-});
-// socket environment start
+const http = require("http");
 const server = http.createServer(app);
+
 const io = socket(server, {
   cors: {
     origin: "*",
@@ -37,8 +29,12 @@ app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE");
     return res.status(200).json({});
   }
-
   next();
+});
+//cors end
+app.use(express.static(`./client/build`));
+app.get("*", (req, res) => {
+  res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
 });
 
 //update one stream var
@@ -237,34 +233,37 @@ const createPeer = (socket) => {
 const handleTrackEvent = (event, peer) => {
   streamer = event.streams[0];
 };
-// socket environment end
 
-//route setup
-// const mediaRoutes = require("./Routes/mediaRoute");
-// app.use("/", mediaRoutes);
-//middleware
+//for mail route
 app.get("/data", async (req, res, next) => {
   try {
-    res.json({ data: "success..." });
+    res.json({ data: "data save suc" });
   } catch (error) {
     next(error);
   }
 });
+
+//mail route
+
+//register route
+// app.post("/register");
+
+//register rote end
+//error handel
 app.use(async (req, res, next) => {
   next(createError.NotFound());
 });
-//socket Envirement
 
 app.use((err, req, res, next) => {
-  res.status(err.status || 500);
+  res.status(err.status || 400);
   res.send({
     error: {
-      status: err.status || 500,
+      status: err.status || 400,
       message: err.message,
     },
   });
 });
 
 server.listen(process.env.PORT || 9000, () => {
-  console.log("9000 The port is ready start...");
+  console.log("The port 9000 is ready to start....");
 });
