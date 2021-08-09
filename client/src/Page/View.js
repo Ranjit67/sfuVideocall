@@ -17,6 +17,7 @@ export default function View() {
     // console.log(pc.current);
     pc.current.addTransceiver("video", { direction: "recvonly" });
     pc.current.addTransceiver("audio", { direction: "recvonly" });
+
     pc.current.createOffer().then((offer) => {
       pc.current.setLocalDescription(offer).then((desc) => {
         socketRef.current.emit("offer_user", {

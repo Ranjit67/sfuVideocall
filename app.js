@@ -118,6 +118,7 @@ const userCreatePeer = (socket) => {
       },
     ],
   });
+
   userPeer.onicecandidate = (event) => {
     if (event.candidate) {
       socket.emit("ice_user", { ice: event.candidate });

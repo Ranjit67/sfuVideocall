@@ -30,7 +30,7 @@ export default function Stream() {
         socketRef.current.on("answer", async (payload) => {
           const { answer } = payload;
           const desc = new RTCSessionDescription(answer);
-          await pc.current
+          pc.current
             .setRemoteDescription(desc)
             .catch((error) => console.log(error));
         });
