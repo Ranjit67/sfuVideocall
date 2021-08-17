@@ -1,6 +1,5 @@
 import {
   // useEffect,
-  // useState,
   useRef,
 } from "react";
 import { io } from "socket.io-client";
@@ -8,30 +7,46 @@ import { io } from "socket.io-client";
 export default function Stream() {
   const myVideo = useRef();
   const socketRef = useRef();
+  const peerVideo = useRef();
   const pc = useRef();
   const socketFn = () => {
-    // socketRef.current = io.connect("http://localhost:9000/stream");
-    socketRef.current = io.connect("/stream");
+    socketRef.current = io.connect("http://localhost:9000/stream");
+    // socketRef.current = io.connect("/stream");
+    const room ="ev"
     navigator.mediaDevices
       .getUserMedia({
         video: true,
         audio: true,
       })
       .then(async (stream) => {
+        console.log(stream.id);
         myVideo.current.srcObject = stream;
+
         pc.current = await createPeer();
+
         stream
           .getTracks()
           .forEach((track) => pc.current.addTrack(track, stream));
+        //
+        // pc.current.addTransceiver("video", { direction: "recvonly" });
+        // pc.current.addTransceiver("audio", { direction: "recvonly" });
+        //
         const offer = await pc.current.createOffer();
         pc.current.setLocalDescription(offer).then((stag) => {
-          sendMessage("offer", { offer: pc.current.localDescription });
+          sendMessage("offer", {
+            offer: pc.current.localDescription,
+            sendBy: "a",
+            roomId:room
+          });
         });
-        socketRef.current.on("answer", async (payload) => {
+        socketRef.current.on("answer",  (payload) => {
           const { answer } = payload;
           const desc = new RTCSessionDescription(answer);
+          console.log(desc);
           pc.current
-            .setRemoteDescription(desc)
+            .setRemoteDescription(desc).then(su=>{
+              console.log(su);
+            })
             .catch((error) => console.log(error));
         });
 
@@ -84,11 +99,13 @@ export default function Stream() {
         });
 
         // backend event end
-        socketRef.current.on("ice", async (payload) => {
+        socketRef.current.on("ice",  (payload) => {
           const { ice } = payload;
           // console.log("other", payload);
           if (ice) {
-            await pc.current.addIceCandidate(ice);
+             pc.current.addIceCandidate(ice).then(su=>{
+              // console.log(su);
+            }).catch(error=>console.log(error))
           }
         });
 
@@ -142,6 +159,9 @@ export default function Stream() {
         // },
       ],
     });
+    peer.ontrack = () => {
+      console.log("track on");
+    };
     // peer.onnegotiationneeded = () => handleNegotiationNeededEvent(peer);
     return peer;
   };
@@ -151,6 +171,7 @@ export default function Stream() {
       {/* <p>Stream</p> */}
       <button onClick={socketFn}>Stream</button>
       <video ref={myVideo} muted autoPlay />
+      <video ref={peerVideo} muted autoPlay />
     </div>
   );
 }

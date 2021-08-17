@@ -39,21 +39,29 @@ app.get("*", (req, res) => {
 });
 
 //update one stream var
-let peerStage;
-let streamer;
+let peerStage={}
+let room={}
+let streamer = {};
 let viewStreamSide = {};
 io.of("/stream").on("connection", (socket) => {
   socket.on("offer", async (payload) => {
-    const { offer } = payload;
-    peerStage = createPeer(socket);
+    const { offer,roomId } = payload;
+    if(room[room]){
+      delete room[roomId]
+    }else{
+      room[roomId]=[{
+        soId:socket.id
+      }];
+    }
+    peerStage[socket.id] = createPeer(socket, socket.id);
     const desc = new webrtc.RTCSessionDescription(offer);
-    peerStage
+    peerStage[socket.id]
       .setRemoteDescription(desc)
 
       .then((sd) => {
-        peerStage.createAnswer().then((answer) => {
-          peerStage.setLocalDescription(answer).then((stl) => {
-            socket.emit("answer", { answer: peerStage.localDescription });
+        peerStage[socket.id].createAnswer().then((answer) => {
+          peerStage[socket.id].setLocalDescription(answer).then((stl) => {
+            socket.emit("answer", { answer: peerStage[socket.id].localDescription });
           });
         });
       });
@@ -61,15 +69,22 @@ io.of("/stream").on("connection", (socket) => {
 
   // user
   socket.on("offer_user", (payload) => {
-    const { offer } = payload;
-    viewStreamSide[socket.id] = userCreatePeer(socket);
+    const { offer,roomId } = payload;
+    room[roomId].push({
+      soId:socket.id
+    })
+    viewStreamSide[socket.id] = userCreatePeer(socket, roomId);
     const desc = new webrtc.RTCSessionDescription(offer);
     viewStreamSide[socket.id].setRemoteDescription(desc).then((remo) => {
-      streamer
-        .getTracks()
-        .forEach((track) =>
-          viewStreamSide[socket.id].addTrack(track, streamer)
-        );
+      const findData = room?.[roomId]?.find(id=>id.soId !==socket.id)
+   
+      if (streamer?.[findData?.soId]) {
+        streamer?.[findData?.soId]
+          .getTracks()
+          .forEach((track) =>
+            viewStreamSide[socket.id].addTrack(track, streamer[findData?.soId])
+          );
+      }
 
       viewStreamSide[socket.id].createAnswer().then((answer) => {
         viewStreamSide[socket.id].setLocalDescription(answer).then((stl) => {
@@ -83,7 +98,7 @@ io.of("/stream").on("connection", (socket) => {
   // user end
 });
 
-const userCreatePeer = (socket) => {
+const userCreatePeer = (socket, roomId) => {
   const userPeer = new webrtc.RTCPeerConnection({
     iceServers: [
       {
@@ -118,7 +133,10 @@ const userCreatePeer = (socket) => {
       },
     ],
   });
-
+  userPeer.ontrack = (e) => {
+    
+    handleTrackEvent(e, userPeer, socket.id)
+  }
   userPeer.onicecandidate = (event) => {
     if (event.candidate) {
       socket.emit("ice_user", { ice: event.candidate });
@@ -133,10 +151,22 @@ const userCreatePeer = (socket) => {
   });
   // events
   userPeer.onconnectionstatechange = (event) => {
-    socket.emit("event", {
-      "pc.current.connectionState": userPeer?.connectionState,
-      onconnectionstatechange: event,
-    });
+    if (userPeer?.connectionState === "connected") {
+      const findOtherUser = room[roomId].find(id=>id.soId !== socket.id)
+  
+      streamer[socket.id].getTracks().forEach((track) => {
+        peerStage[findOtherUser.soId].addTrack(track, streamer[socket.id]);
+      });
+      // socket.emit("event", {
+      //   peerStag: peerStage,
+      //   userPeer,
+      // });
+    } else {
+      socket.emit("event", {
+        "pc.current.connectionState": userPeer?.connectionState,
+        onconnectionstatechange: event,
+      });
+    }
   };
   userPeer.oniceconnectionstatechange = async (event) => {
     if (userPeer?.iceConnectionState === "failed") {
@@ -158,7 +188,7 @@ const userCreatePeer = (socket) => {
   return userPeer;
 };
 // socket function
-const createPeer = (socket) => {
+const createPeer = (socket, sendBy) => {
   const peer = new webrtc.RTCPeerConnection({
     iceServers: [
       {
@@ -193,7 +223,7 @@ const createPeer = (socket) => {
       },
     ],
   });
-  peer.ontrack = (e) => handleTrackEvent(e, peer);
+  peer.ontrack = (e) => handleTrackEvent(e, peer, sendBy);
   peer.onicecandidate = (event) => {
     if (event.candidate) {
       socket.emit("ice", { ice: event.candidate });
@@ -232,8 +262,8 @@ const createPeer = (socket) => {
   // event end
   return peer;
 };
-const handleTrackEvent = (event, peer) => {
-  streamer = event.streams[0];
+const handleTrackEvent = (event, peer, sendBy) => {
+  streamer[sendBy] = event.streams[0];
 };
 
 //for mail route
