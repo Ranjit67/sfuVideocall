@@ -13,7 +13,7 @@ export default function View() {
   const socketFn = () => {
     socketRef.current = io.connect("http://localhost:9000/stream");
     // socketRef.current = io.connect("/stream");
-    const room ="ev"
+    const room = "ev";
     navigator.mediaDevices
       .getUserMedia({
         video: true,
@@ -21,7 +21,6 @@ export default function View() {
       })
       .then(async (stream) => {
         myVideoRef.current.srcObject = stream;
-        console.log(stream.id);
         pc.current = await createPeer();
         stream
           .getTracks()
@@ -35,7 +34,7 @@ export default function View() {
             socketRef.current.emit("offer_user", {
               offer: pc.current.localDescription,
               sendBy: "b",
-              roomId:room
+              roomId: room,
             });
           });
         });

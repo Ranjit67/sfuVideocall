@@ -12,14 +12,14 @@ export default function Stream() {
   const socketFn = () => {
     socketRef.current = io.connect("http://localhost:9000/stream");
     // socketRef.current = io.connect("/stream");
-    const room ="ev"
+    const room = "ev";
     navigator.mediaDevices
       .getUserMedia({
         video: true,
         audio: true,
       })
       .then(async (stream) => {
-        console.log(stream.id);
+        // console.log(stream.id);
         myVideo.current.srcObject = stream;
 
         pc.current = await createPeer();
@@ -36,15 +36,15 @@ export default function Stream() {
           sendMessage("offer", {
             offer: pc.current.localDescription,
             sendBy: "a",
-            roomId:room
+            roomId: room,
           });
         });
-        socketRef.current.on("answer",  (payload) => {
+        socketRef.current.on("answer", (payload) => {
           const { answer } = payload;
           const desc = new RTCSessionDescription(answer);
-          console.log(desc);
           pc.current
-            .setRemoteDescription(desc).then(su=>{
+            .setRemoteDescription(desc)
+            .then((su) => {
               console.log(su);
             })
             .catch((error) => console.log(error));
@@ -99,16 +99,35 @@ export default function Stream() {
         });
 
         // backend event end
-        socketRef.current.on("ice",  (payload) => {
+        socketRef.current.on("ice", (payload) => {
           const { ice } = payload;
           // console.log("other", payload);
           if (ice) {
-             pc.current.addIceCandidate(ice).then(su=>{
-              // console.log(su);
-            }).catch(error=>console.log(error))
+            pc.current
+              .addIceCandidate(ice)
+              .then((su) => {
+                // console.log(su);
+              })
+              .catch((error) => console.log(error));
           }
         });
-
+        // forther set up
+        socketRef.current.on("offer_send_fortherSetUp", (payload) => {
+          const { offer } = payload;
+          const desc = new RTCSessionDescription(offer);
+          pc.current.setRemoteDescription(desc).then((sld) => {
+            // may be stream add fother
+            pc.current.createAnswer().then((answer) => {
+              pc.current.setLocalDescription(answer).then((west) => {
+                console.log(pc.current.localDescription);
+                socketRef.current.emit("answer_send_after_setup", {
+                  answer: pc.current.localDescription,
+                });
+              });
+            });
+          });
+          // console.log(offer);
+        });
         //then end
       });
 
@@ -159,13 +178,17 @@ export default function Stream() {
         // },
       ],
     });
-    peer.ontrack = () => {
-      console.log("track on");
+    peer.ontrack = (e) => {
+      handelTrackEventCapture(e);
+      // console.log("track on");
     };
     // peer.onnegotiationneeded = () => handleNegotiationNeededEvent(peer);
     return peer;
   };
-
+  const handelTrackEventCapture = (event) => {
+    // console.log(event.streams[0]);
+    peerVideo.current.srcObject = event.streams[0];
+  };
   return (
     <div>
       {/* <p>Stream</p> */}
