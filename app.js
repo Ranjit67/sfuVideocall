@@ -39,19 +39,21 @@ app.get("*", (req, res) => {
 });
 
 //update one stream var
-let peerStage={}
-let room={}
+let peerStage = {};
+let room = {};
 let streamer = {};
 let viewStreamSide = {};
 io.of("/stream").on("connection", (socket) => {
   socket.on("offer", async (payload) => {
-    const { offer,roomId } = payload;
-    if(room[room]){
-      delete room[roomId]
-    }else{
-      room[roomId]=[{
-        soId:socket.id
-      }];
+    const { offer, roomId } = payload;
+    if (room[room]) {
+      delete room[roomId];
+    } else {
+      room[roomId] = [
+        {
+          soId: socket.id,
+        },
+      ];
     }
     peerStage[socket.id] = createPeer(socket, socket.id);
     const desc = new webrtc.RTCSessionDescription(offer);
@@ -61,23 +63,33 @@ io.of("/stream").on("connection", (socket) => {
       .then((sd) => {
         peerStage[socket.id].createAnswer().then((answer) => {
           peerStage[socket.id].setLocalDescription(answer).then((stl) => {
-            socket.emit("answer", { answer: peerStage[socket.id].localDescription });
+            socket.emit("answer", {
+              answer: peerStage[socket.id].localDescription,
+            });
           });
         });
       });
   });
+  // after setup stream
+  socket.on("answer_send_after_setup", (payload) => {
+    const { answer } = payload;
+    const desc = new webrtc.RTCSessionDescription(answer);
+    peerStage[socket.id].setRemoteDescription(desc).then((check) => {
+      // console.log(check);
+    });
+  });
 
   // user
   socket.on("offer_user", (payload) => {
-    const { offer,roomId } = payload;
+    const { offer, roomId } = payload;
     room[roomId].push({
-      soId:socket.id
-    })
+      soId: socket.id,
+    });
     viewStreamSide[socket.id] = userCreatePeer(socket, roomId);
     const desc = new webrtc.RTCSessionDescription(offer);
     viewStreamSide[socket.id].setRemoteDescription(desc).then((remo) => {
-      const findData = room?.[roomId]?.find(id=>id.soId !==socket.id)
-   
+      const findData = room?.[roomId]?.find((id) => id.soId !== socket.id);
+
       if (streamer?.[findData?.soId]) {
         streamer?.[findData?.soId]
           .getTracks()
@@ -134,9 +146,8 @@ const userCreatePeer = (socket, roomId) => {
     ],
   });
   userPeer.ontrack = (e) => {
-    
-    handleTrackEvent(e, userPeer, socket.id)
-  }
+    handleTrackEvent(e, userPeer, socket.id);
+  };
   userPeer.onicecandidate = (event) => {
     if (event.candidate) {
       socket.emit("ice_user", { ice: event.candidate });
@@ -152,10 +163,20 @@ const userCreatePeer = (socket, roomId) => {
   // events
   userPeer.onconnectionstatechange = (event) => {
     if (userPeer?.connectionState === "connected") {
-      const findOtherUser = room[roomId].find(id=>id.soId !== socket.id)
-  
+      const findOtherUser = room[roomId].find((id) => id.soId !== socket.id);
+
       streamer[socket.id].getTracks().forEach((track) => {
         peerStage[findOtherUser.soId].addTrack(track, streamer[socket.id]);
+      });
+      peerStage[findOtherUser.soId]?.createOffer().then((offer) => {
+        peerStage[findOtherUser.soId]
+          .setLocalDescription(offer)
+          .then((west) => {
+            socket.to(findOtherUser?.soId).emit("offer_send_fortherSetUp", {
+              offer: peerStage[findOtherUser.soId]?.localDescription,
+            });
+            // console.log(peerStage[findOtherUser.soId]?.localDescription);
+          });
       });
       // socket.emit("event", {
       //   peerStag: peerStage,
@@ -191,35 +212,18 @@ const userCreatePeer = (socket, roomId) => {
 const createPeer = (socket, sendBy) => {
   const peer = new webrtc.RTCPeerConnection({
     iceServers: [
+      { urls: ["stun:bn-turn1.xirsys.com"] },
       {
-        urls: "stun:stun.stunprotocol.org",
-      },
-      { urls: "stun:stun.ekiga.net" },
-      { urls: "stun:stun.schlund.de" },
-      { urls: "stun:stun.l.google.com:19302" },
-
-      { urls: "stun:stun1.l.google.com:19302" },
-      { urls: "stun:stun2.l.google.com:19302" },
-      { urls: "stun:stun3.l.google.com:19302" },
-      { urls: "stun:stun4.l.google.com:19302" },
-      { urls: "stun:stun.softjoys.com" },
-      { urls: "stun:stun.voipbuster.com" },
-      { urls: "stun:stun.voipstunt.com" },
-      { urls: "stun:stun.xten.com" },
-      {
-        urls: "turn:numb.viagenie.ca",
-        credential: "muazkh",
-        username: "webrtc@live.com",
+        urls: ["turns:bn-turn1.xirsys.com:5349?transport=tcp"],
+        username:
+          "MMl3LEyRyvC1NM2u2nGwsSXc1SVyYkLR6vbHpAbg7PKZ0qGB3i_JUQYqoBAHeRH4AAAAAGEoxHFzYWhvb3JhbmppdDc=",
+        credential: "2e165fe2-0725-11ec-b202-0242ac140004",
       },
       {
-        urls: "turn:192.158.29.39:3478?transport=udp",
-        credential: "JZEOEt2V3Qb0y27GRntt2u2PAYA=",
-        username: "28224511:1379330808",
-      },
-      {
-        urls: "turn:192.158.29.39:3478?transport=tcp",
-        credential: "JZEOEt2V3Qb0y27GRntt2u2PAYA=",
-        username: "28224511:1379330808",
+        urls: ["turn:bn-turn1.xirsys.com:3478?transport=udp"],
+        username:
+          "MMl3LEyRyvC1NM2u2nGwsSXc1SVyYkLR6vbHpAbg7PKZ0qGB3i_JUQYqoBAHeRH4AAAAAGEoxHFzYWhvb3JhbmppdDc=",
+        credential: "2e165fe2-0725-11ec-b202-0242ac140004",
       },
     ],
   });

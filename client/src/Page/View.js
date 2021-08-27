@@ -13,7 +13,7 @@ export default function View() {
   const socketFn = () => {
     socketRef.current = io.connect("http://localhost:9000/stream");
     // socketRef.current = io.connect("/stream");
-    const room ="ev"
+    const room = "ev";
     navigator.mediaDevices
       .getUserMedia({
         video: true,
@@ -21,7 +21,6 @@ export default function View() {
       })
       .then(async (stream) => {
         myVideoRef.current.srcObject = stream;
-        console.log(stream.id);
         pc.current = await createPeer();
         stream
           .getTracks()
@@ -35,7 +34,7 @@ export default function View() {
             socketRef.current.emit("offer_user", {
               offer: pc.current.localDescription,
               sendBy: "b",
-              roomId:room
+              roomId: room,
             });
           });
         });
@@ -109,35 +108,18 @@ export default function View() {
   const createPeer = () => {
     const peer = new RTCPeerConnection({
       iceServers: [
+        { urls: ["stun:bn-turn1.xirsys.com"] },
         {
-          urls: "stun:stun.stunprotocol.org",
-        },
-        { urls: "stun:stun.ekiga.net" },
-        { urls: "stun:stun.schlund.de" },
-        { urls: "stun:stun.l.google.com:19302" },
-
-        { urls: "stun:stun1.l.google.com:19302" },
-        { urls: "stun:stun2.l.google.com:19302" },
-        { urls: "stun:stun3.l.google.com:19302" },
-        { urls: "stun:stun4.l.google.com:19302" },
-        { urls: "stun:stun.softjoys.com" },
-        { urls: "stun:stun.voipbuster.com" },
-        { urls: "stun:stun.voipstunt.com" },
-        { urls: "stun:stun.xten.com" },
-        {
-          urls: "turn:numb.viagenie.ca",
-          credential: "muazkh",
-          username: "webrtc@live.com",
+          urls: ["turns:bn-turn1.xirsys.com:5349?transport=tcp"],
+          username:
+            "MMl3LEyRyvC1NM2u2nGwsSXc1SVyYkLR6vbHpAbg7PKZ0qGB3i_JUQYqoBAHeRH4AAAAAGEoxHFzYWhvb3JhbmppdDc=",
+          credential: "2e165fe2-0725-11ec-b202-0242ac140004",
         },
         {
-          urls: "turn:192.158.29.39:3478?transport=udp",
-          credential: "JZEOEt2V3Qb0y27GRntt2u2PAYA=",
-          username: "28224511:1379330808",
-        },
-        {
-          urls: "turn:192.158.29.39:3478?transport=tcp",
-          credential: "JZEOEt2V3Qb0y27GRntt2u2PAYA=",
-          username: "28224511:1379330808",
+          urls: ["turn:bn-turn1.xirsys.com:3478?transport=udp"],
+          username:
+            "MMl3LEyRyvC1NM2u2nGwsSXc1SVyYkLR6vbHpAbg7PKZ0qGB3i_JUQYqoBAHeRH4AAAAAGEoxHFzYWhvb3JhbmppdDc=",
+          credential: "2e165fe2-0725-11ec-b202-0242ac140004",
         },
       ],
     });

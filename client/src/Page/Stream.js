@@ -12,14 +12,14 @@ export default function Stream() {
   const socketFn = () => {
     socketRef.current = io.connect("http://localhost:9000/stream");
     // socketRef.current = io.connect("/stream");
-    const room ="ev"
+    const room = "ev";
     navigator.mediaDevices
       .getUserMedia({
         video: true,
         audio: true,
       })
       .then(async (stream) => {
-        console.log(stream.id);
+        // console.log(stream.id);
         myVideo.current.srcObject = stream;
 
         pc.current = await createPeer();
@@ -36,15 +36,15 @@ export default function Stream() {
           sendMessage("offer", {
             offer: pc.current.localDescription,
             sendBy: "a",
-            roomId:room
+            roomId: room,
           });
         });
-        socketRef.current.on("answer",  (payload) => {
+        socketRef.current.on("answer", (payload) => {
           const { answer } = payload;
           const desc = new RTCSessionDescription(answer);
-          console.log(desc);
           pc.current
-            .setRemoteDescription(desc).then(su=>{
+            .setRemoteDescription(desc)
+            .then((su) => {
               console.log(su);
             })
             .catch((error) => console.log(error));
@@ -99,16 +99,35 @@ export default function Stream() {
         });
 
         // backend event end
-        socketRef.current.on("ice",  (payload) => {
+        socketRef.current.on("ice", (payload) => {
           const { ice } = payload;
           // console.log("other", payload);
           if (ice) {
-             pc.current.addIceCandidate(ice).then(su=>{
-              // console.log(su);
-            }).catch(error=>console.log(error))
+            pc.current
+              .addIceCandidate(ice)
+              .then((su) => {
+                // console.log(su);
+              })
+              .catch((error) => console.log(error));
           }
         });
-
+        // forther set up
+        socketRef.current.on("offer_send_fortherSetUp", (payload) => {
+          const { offer } = payload;
+          const desc = new RTCSessionDescription(offer);
+          pc.current.setRemoteDescription(desc).then((sld) => {
+            // may be stream add fother
+            pc.current.createAnswer().then((answer) => {
+              pc.current.setLocalDescription(answer).then((west) => {
+                console.log(pc.current.localDescription);
+                socketRef.current.emit("answer_send_after_setup", {
+                  answer: pc.current.localDescription,
+                });
+              });
+            });
+          });
+          // console.log(offer);
+        });
         //then end
       });
 
@@ -122,50 +141,32 @@ export default function Stream() {
   const createPeer = async () => {
     const peer = new RTCPeerConnection({
       iceServers: [
+        { urls: ["stun:bn-turn1.xirsys.com"] },
         {
-          urls: "stun:stun.stunprotocol.org",
-        },
-        { urls: "stun:stun.ekiga.net" },
-        { urls: "stun:stun.schlund.de" },
-        { urls: "stun:stun.l.google.com:19302" },
-
-        { urls: "stun:stun1.l.google.com:19302" },
-        { urls: "stun:stun2.l.google.com:19302" },
-        { urls: "stun:stun3.l.google.com:19302" },
-        { urls: "stun:stun4.l.google.com:19302" },
-        { urls: "stun:stun.softjoys.com" },
-        { urls: "stun:stun.voipbuster.com" },
-        { urls: "stun:stun.voipstunt.com" },
-        { urls: "stun:stun.xten.com" },
-        {
-          urls: "turn:numb.viagenie.ca",
-          credential: "muazkh",
-          username: "webrtc@live.com",
+          urls: ["turns:bn-turn1.xirsys.com:5349?transport=tcp"],
+          username:
+            "MMl3LEyRyvC1NM2u2nGwsSXc1SVyYkLR6vbHpAbg7PKZ0qGB3i_JUQYqoBAHeRH4AAAAAGEoxHFzYWhvb3JhbmppdDc=",
+          credential: "2e165fe2-0725-11ec-b202-0242ac140004",
         },
         {
-          urls: "turn:192.158.29.39:3478?transport=udp",
-          credential: "JZEOEt2V3Qb0y27GRntt2u2PAYA=",
-          username: "28224511:1379330808",
+          urls: ["turn:bn-turn1.xirsys.com:3478?transport=udp"],
+          username:
+            "MMl3LEyRyvC1NM2u2nGwsSXc1SVyYkLR6vbHpAbg7PKZ0qGB3i_JUQYqoBAHeRH4AAAAAGEoxHFzYWhvb3JhbmppdDc=",
+          credential: "2e165fe2-0725-11ec-b202-0242ac140004",
         },
-        {
-          urls: "turn:192.158.29.39:3478?transport=tcp",
-          credential: "JZEOEt2V3Qb0y27GRntt2u2PAYA=",
-          username: "28224511:1379330808",
-        },
-        // {
-        //   urls: "turn:numb.viagenie.ca",
-        //   credential: "muazkh",
-        //   username: "webrtc@live.com",
-        // },
       ],
     });
-    peer.ontrack = () => {
-      console.log("track on");
+    peer.ontrack = (e) => {
+      handelTrackEventCapture(e);
+      // console.log("track on");
     };
     // peer.onnegotiationneeded = () => handleNegotiationNeededEvent(peer);
     return peer;
   };
-
+  const handelTrackEventCapture = (event) => {
+    // console.log(event.streams[0]);
+    peerVideo.current.srcObject = event.streams[0];
+  };
   return (
     <div>
       {/* <p>Stream</p> */}
