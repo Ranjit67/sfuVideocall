@@ -214,17 +214,16 @@ const createPeer = (socket, sendBy) => {
     iceServers: [
       { urls: ["stun:bn-turn1.xirsys.com"] },
       {
+        urls: ["turns:bn-turn1.xirsys.com:5349?transport=tcp"],
         username:
           "MMl3LEyRyvC1NM2u2nGwsSXc1SVyYkLR6vbHpAbg7PKZ0qGB3i_JUQYqoBAHeRH4AAAAAGEoxHFzYWhvb3JhbmppdDc=",
         credential: "2e165fe2-0725-11ec-b202-0242ac140004",
-        urls: [
-          "turn:bn-turn1.xirsys.com:80?transport=udp",
-          "turn:bn-turn1.xirsys.com:3478?transport=udp",
-          "turn:bn-turn1.xirsys.com:80?transport=tcp",
-          "turn:bn-turn1.xirsys.com:3478?transport=tcp",
-          "turns:bn-turn1.xirsys.com:443?transport=tcp",
-          "turns:bn-turn1.xirsys.com:5349?transport=tcp",
-        ],
+      },
+      {
+        urls: ["turn:bn-turn1.xirsys.com:3478?transport=udp"],
+        username:
+          "MMl3LEyRyvC1NM2u2nGwsSXc1SVyYkLR6vbHpAbg7PKZ0qGB3i_JUQYqoBAHeRH4AAAAAGEoxHFzYWhvb3JhbmppdDc=",
+        credential: "2e165fe2-0725-11ec-b202-0242ac140004",
       },
     ],
   });
