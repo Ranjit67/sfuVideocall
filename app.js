@@ -112,21 +112,7 @@ io.of("/stream").on("connection", (socket) => {
 
 const userCreatePeer = (socket, roomId) => {
   const userPeer = new webrtc.RTCPeerConnection({
-    iceServers: [
-      { urls: ["stun:bn-turn1.xirsys.com"] },
-      {
-        urls: ["turns:bn-turn1.xirsys.com:5349?transport=tcp"],
-        username:
-          "MMl3LEyRyvC1NM2u2nGwsSXc1SVyYkLR6vbHpAbg7PKZ0qGB3i_JUQYqoBAHeRH4AAAAAGEoxHFzYWhvb3JhbmppdDc=",
-        credential: "2e165fe2-0725-11ec-b202-0242ac140004",
-      },
-      {
-        urls: ["turn:bn-turn1.xirsys.com:3478?transport=udp"],
-        username:
-          "MMl3LEyRyvC1NM2u2nGwsSXc1SVyYkLR6vbHpAbg7PKZ0qGB3i_JUQYqoBAHeRH4AAAAAGEoxHFzYWhvb3JhbmppdDc=",
-        credential: "2e165fe2-0725-11ec-b202-0242ac140004",
-      },
-    ],
+    iceServers: [{ urls: "stun:bn-turn1.xirsys.com" }],
   });
   userPeer.ontrack = (e) => {
     handleTrackEvent(e, userPeer, socket.id);
@@ -194,21 +180,7 @@ const userCreatePeer = (socket, roomId) => {
 // socket function
 const createPeer = (socket, sendBy) => {
   const peer = new webrtc.RTCPeerConnection({
-    iceServers: [
-      { urls: ["stun:bn-turn1.xirsys.com"] },
-      {
-        urls: ["turns:bn-turn1.xirsys.com:5349?transport=tcp"],
-        username:
-          "MMl3LEyRyvC1NM2u2nGwsSXc1SVyYkLR6vbHpAbg7PKZ0qGB3i_JUQYqoBAHeRH4AAAAAGEoxHFzYWhvb3JhbmppdDc=",
-        credential: "2e165fe2-0725-11ec-b202-0242ac140004",
-      },
-      {
-        urls: ["turn:bn-turn1.xirsys.com:3478?transport=udp"],
-        username:
-          "MMl3LEyRyvC1NM2u2nGwsSXc1SVyYkLR6vbHpAbg7PKZ0qGB3i_JUQYqoBAHeRH4AAAAAGEoxHFzYWhvb3JhbmppdDc=",
-        credential: "2e165fe2-0725-11ec-b202-0242ac140004",
-      },
-    ],
+    iceServers: [{ urls: "stun:bn-turn1.xirsys.com" }],
   });
   peer.ontrack = (e) => handleTrackEvent(e, peer, sendBy);
   peer.onicecandidate = (event) => {
