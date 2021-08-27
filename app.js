@@ -112,7 +112,43 @@ io.of("/stream").on("connection", (socket) => {
 
 const userCreatePeer = (socket, roomId) => {
   const userPeer = new webrtc.RTCPeerConnection({
-    iceServers: [{ urls: "stun:bn-turn1.xirsys.com" }],
+    iceServers: [
+      {
+        urls: "stun:stun.stunprotocol.org",
+      },
+      { urls: "stun:stun.ekiga.net" },
+      { urls: "stun:stun.schlund.de" },
+      { urls: "stun:stun.l.google.com:19302" },
+
+      { urls: "stun:stun1.l.google.com:19302" },
+      { urls: "stun:stun2.l.google.com:19302" },
+      { urls: "stun:stun3.l.google.com:19302" },
+      { urls: "stun:stun4.l.google.com:19302" },
+      { urls: "stun:stun.softjoys.com" },
+      { urls: "stun:stun.voipbuster.com" },
+      { urls: "stun:stun.voipstunt.com" },
+      { urls: "stun:stun.xten.com" },
+      {
+        urls: "turn:numb.viagenie.ca",
+        credential: "muazkh",
+        username: "webrtc@live.com",
+      },
+      {
+        urls: "turn:192.158.29.39:3478?transport=udp",
+        credential: "JZEOEt2V3Qb0y27GRntt2u2PAYA=",
+        username: "28224511:1379330808",
+      },
+      {
+        urls: "turn:192.158.29.39:3478?transport=tcp",
+        credential: "JZEOEt2V3Qb0y27GRntt2u2PAYA=",
+        username: "28224511:1379330808",
+      },
+      // {
+      //   urls: "turn:numb.viagenie.ca",
+      //   credential: "muazkh",
+      //   username: "webrtc@live.com",
+      // },
+    ],
   });
   userPeer.ontrack = (e) => {
     handleTrackEvent(e, userPeer, socket.id);
@@ -180,7 +216,43 @@ const userCreatePeer = (socket, roomId) => {
 // socket function
 const createPeer = (socket, sendBy) => {
   const peer = new webrtc.RTCPeerConnection({
-    iceServers: [{ urls: "stun:bn-turn1.xirsys.com" }],
+    iceServers: [
+      {
+        urls: "stun:stun.stunprotocol.org",
+      },
+      { urls: "stun:stun.ekiga.net" },
+      { urls: "stun:stun.schlund.de" },
+      { urls: "stun:stun.l.google.com:19302" },
+
+      { urls: "stun:stun1.l.google.com:19302" },
+      { urls: "stun:stun2.l.google.com:19302" },
+      { urls: "stun:stun3.l.google.com:19302" },
+      { urls: "stun:stun4.l.google.com:19302" },
+      { urls: "stun:stun.softjoys.com" },
+      { urls: "stun:stun.voipbuster.com" },
+      { urls: "stun:stun.voipstunt.com" },
+      { urls: "stun:stun.xten.com" },
+      {
+        urls: "turn:numb.viagenie.ca",
+        credential: "muazkh",
+        username: "webrtc@live.com",
+      },
+      {
+        urls: "turn:192.158.29.39:3478?transport=udp",
+        credential: "JZEOEt2V3Qb0y27GRntt2u2PAYA=",
+        username: "28224511:1379330808",
+      },
+      {
+        urls: "turn:192.158.29.39:3478?transport=tcp",
+        credential: "JZEOEt2V3Qb0y27GRntt2u2PAYA=",
+        username: "28224511:1379330808",
+      },
+      // {
+      //   urls: "turn:numb.viagenie.ca",
+      //   credential: "muazkh",
+      //   username: "webrtc@live.com",
+      // },
+    ],
   });
   peer.ontrack = (e) => handleTrackEvent(e, peer, sendBy);
   peer.onicecandidate = (event) => {
